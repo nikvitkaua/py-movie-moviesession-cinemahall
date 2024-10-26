@@ -8,13 +8,13 @@ def get_movies(genres_ids: list[int] = None, actors_ids: list[int] = None) -> Qu
         return Movie.objects.all()
 
     if genres_ids and actors_ids:
-        return Movie.objects.filter(genre__in=genres_ids).filter(actor__in=actors_ids)
+        return Movie.objects.filter(genres__in=genres_ids).filter(actors__in=actors_ids)
 
     if genres_ids and not actors_ids:
-        return Movie.objects.filter(genre__in=genres_ids)
+        return Movie.objects.filter(genres__in=genres_ids)
 
     if actors_ids and not genres_ids:
-        return Movie.objects.filter(actor__in=actors_ids)
+        return Movie.objects.filter(actors__in=actors_ids)
 
 def get_movie_by_id(movie_id: int) -> Movie:
     return Movie.objects.get(id=movie_id)
