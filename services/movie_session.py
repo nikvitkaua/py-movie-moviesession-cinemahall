@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
-
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
-
 from db.models import MovieSession, CinemaHall, Movie
 
 
@@ -10,11 +9,21 @@ def create_movie_session(
         movie_id: int,
         cinema_hall_id: int
 ) -> None:
+    if isinstance(movie_show_time, str):
+        try:
+            show_time = datetime.strptime(movie_show_time, "%Y-%m-%d")
+        except ValueError:
+            raise ValueError("Date format must be 'YYYY-MM-DD'")
+    elif isinstance(movie_show_time, datetime):
+        show_time = movie_show_time
+    else:
+        raise TypeError("movie_show_time must be a string or datetime object")
+
     movie = Movie.objects.get(id=movie_id)
     cinema_hall = CinemaHall.objects.get(id=cinema_hall_id)
 
     MovieSession.objects.create(
-        show_time=movie_show_time,
+        show_time=show_time,
         movie=movie,
         cinema_hall=cinema_hall
     )
@@ -47,10 +56,22 @@ def update_movie_session(
     update_fields = {}
     if show_time is not None:
         update_fields["show_time"] = show_time
+
     if movie_id is not None:
-        update_fields["movie_id"] = movie_id
+        try:
+            Movie.objects.get(id=movie_id)
+            update_fields["movie_id"] = movie_id
+        except ObjectDoesNotExist:
+            raise ValueError(f"Movie with id {movie_id} does not exist.")
+
     if cinema_hall_id is not None:
-        update_fields["cinema_hall_id"] = cinema_hall_id
+        try:
+            CinemaHall.objects.get(id=cinema_hall_id)
+            update_fields["cinema_hall_id"] = cinema_hall_id
+        except ObjectDoesNotExist:
+            raise ValueError(f"CinemaHall with "
+                             f"id {cinema_hall_id} does not exist.")
+
     if update_fields:
         MovieSession.objects.filter(id=session_id).update(**update_fields)
 
